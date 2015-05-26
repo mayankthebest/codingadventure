@@ -17,15 +17,15 @@
             <RowDefinition Height="25*"/>
         </Grid.RowDefinitions>
         <Label Content="Task Name" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
-        <TextBox Text="{Binding TaskTitle}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0"/>
-        
+        <TextBox Text="{Binding TaskTitle, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0"/>
+
         <Label Content="File Path" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1"/>
-        <TextBox HorizontalAlignment="Stretch" Text="{Binding FileName}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1"/>
+        <TextBox HorizontalAlignment="Stretch" Text="{Binding FileName, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1"/>
 
         <Label Content="Find What" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2"/>
-        <TextBox HorizontalAlignment="Stretch" Text="{Binding FindWhat}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="2"/>
+        <TextBox HorizontalAlignment="Stretch" Text="{Binding FindWhat, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="2"/>
 
         <Label Content="Replace With" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="3"/>
-        <TextBox HorizontalAlignment="Stretch" Text="{Binding ReplaceWith}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="3"/>
+        <TextBox HorizontalAlignment="Stretch" Text="{Binding ReplaceWith, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="3"/>
     </Grid>
 </UserControl>

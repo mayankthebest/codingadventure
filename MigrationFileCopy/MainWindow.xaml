@@ -11,7 +11,9 @@
             <MenuItem Header="Actions" Background="White">
                 <MenuItem Header="Copy File" Command="{Binding OnContentChangedCommand}" CommandParameter="Copy File" Background="White"></MenuItem>
                 <MenuItem Header="Find &amp; Replace" Command="{Binding OnContentChangedCommand}" CommandParameter="Find &amp; Replace" Background="White"></MenuItem>
-                <MenuItem Header="Restart Scheduler Service" Command="{Binding Path=OnSchedulerTaskAddedCommand}" Background="White"></MenuItem>
+                <MenuItem Header="Delete File/Folder" Command="{Binding OnContentChangedCommand}" CommandParameter="Delete" Background="White"></MenuItem>
+                <MenuItem Header="Restart Service" Command="{Binding Path=OnContentChangedCommand}" CommandParameter="RestartService" Background="White"></MenuItem>
+                <MenuItem Header="Start Process" Command="{Binding Path=OnContentChangedCommand}" CommandParameter="StartProcess" Background="White"></MenuItem>
             </MenuItem>
             <MenuItem Header="Remote Computers" Command="{Binding OnContentChangedCommand}" CommandParameter="Remote Computers" Background="White"/>
             <MenuItem Header="About" x:Name="menuItemAbout" Command="{Binding OnContentChangedCommand}" CommandParameter="About" Background="White"/>

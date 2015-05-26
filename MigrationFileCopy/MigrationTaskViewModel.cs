@@ -15,14 +15,14 @@ namespace MigrationFileCopy
     /// <summary>
     /// View Model for tool
     /// </summary>
-    public class MigrationTaskViewModel : INotifyPropertyChanged
+    public class MigrationTaskViewModel : INotifyPropertyChanged, IDataErrorInfo
     {
         #region Private Variables
         private ObservableCollection<MigrationTask> allTasks = new ObservableCollection<MigrationTask>();
         private static ObservableCollection<LogEntry> allLogEntries = new ObservableCollection<LogEntry>();
         private MigrationTask activeTask = null;
         private string taskTitle;
-        private string projectTitle = "Migration Copy Tool";
+        private string projectTitle = "Orchestrator Tool";
         private object userControl;
         private TaskType migrationTaskType = TaskType.None;
         private bool isRunning = false;
@@ -197,6 +197,25 @@ namespace MigrationFileCopy
                 NotifyPropertyChanged("CanTasksRun");
             }
         }
+        /// <summary>
+        /// Gets an error message indicating what is wrong with this object.
+        /// </summary>
+        public string Error
+        {
+            get { return "This field cannot be empty"; }
+        }
+        /// <summary>
+        /// Gets the error message for the property with the given name.
+        /// </summary>
+        /// <param name="columnName">Name of the column.</param>
+        /// <returns></returns>
+        public string this[string columnName]
+        {
+            get
+            {
+                return Validate(columnName);
+            }
+        }
         public ICommand OnBrowseClickedCommand
         {
             get
@@ -207,18 +226,6 @@ namespace MigrationFileCopy
                 }
 
                 return onBrowseClickedCommand;
-            }
-        }
-        public ICommand OnSchedulerTaskAddedCommand
-        {
-            get
-            {
-                if (onTaskAddedCommand == null)
-                {
-                    onTaskAddedCommand = new RelayCommand(SchedulerTaskAdded);
-                }
-
-                return onTaskAddedCommand;
             }
         }
         public ICommand OnCreateTaskCommand
@@ -327,13 +334,20 @@ namespace MigrationFileCopy
                                 continue;
                             if (task.IsFolderCopy)
                             {
-                                folderPath = Path.GetDirectoryName(task.Source);
+                                folderPath = task.Source;
+                                if (!Directory.Exists(folderPath))
+                                {
+                                    AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = task.Source + " not found." });
+                                    continue;
+                                }
                             }
-
-                            if (!File.Exists(task.Source))
+                            else
                             {
-                                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = task.Source + " not found." });
-                                continue;
+                                if (!File.Exists(task.Source))
+                                {
+                                    AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = task.Source + " not found." });
+                                    continue;
+                                }
                             }
 
                             foreach (var computer in computerList.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries))
@@ -350,11 +364,13 @@ namespace MigrationFileCopy
 
                                         foreach (string file in Directory.GetFiles(folderPath))
                                         {
-                                            CopyFile(relativePath, task, computer, file);
+                                            CopyFile(relativePath, task, computer, file, true);
                                         }
                                     }
-
-                                    CopyFile(relativePath, task, computer, task.Source);
+                                    else
+                                    {
+                                        CopyFile(relativePath, task, computer, task.Source);
+                                    }
                                 }
                                 catch (Exception ex)
                                 {
@@ -367,6 +383,31 @@ namespace MigrationFileCopy
                             MessageBox.Show(ex.Message + ex.StackTrace);
                         }
 
+                        break;
+                    case TaskType.DeleteFileOrFolder:
+                        relativePath = GetRelativePath(task.FileName);
+                        if (string.IsNullOrEmpty(relativePath))
+                            continue;
+                        foreach (var computer in computerList.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            try
+                            {
+                                if (File.Exists("\\\\" + computer + "\\" + relativePath))
+                                {
+                                    File.Delete("\\\\" + computer + "\\" + relativePath);
+                                }
+                                else if (Directory.Exists("\\\\" + computer + "\\" + relativePath))
+                                {
+                                    Directory.Delete("\\\\" + computer + "\\" + relativePath, true);
+                                }
+
+                                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = string.Format("Deleted {0}", "\\\\" + computer + "\\" + relativePath) });
+                            }
+                            catch (Exception ex)
+                            {
+                                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = ex.Message });
+                            }
+                        }
                         break;
                     case TaskType.FindReplace:
                         relativePath = GetRelativePath(task.FileName);
@@ -393,9 +434,23 @@ namespace MigrationFileCopy
                     case TaskType.ChangeKeyValue:
                         break;
                     case TaskType.RestartJobService:
-                        Helper.RestartJobScheduler();
+                        Helper.RestartJobScheduler(task.FileName);
                         break;
                     case TaskType.RemoteComputer:
+                        break;
+                    case TaskType.StartProcess:
+                        foreach (var computer in computerList.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries))
+                        {
+                            try
+                            {
+                                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = string.Format("Starting process {0} on {1}", task.FileName, computer) });
+                                Helper.StartProcess(computer, task.FileName);
+                            }
+                            catch (Exception ex)
+                            {
+                                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = ex.Message });
+                            }
+                        }
                         break;
                     default:
                         break;
@@ -411,7 +466,7 @@ namespace MigrationFileCopy
         /// <param name="task">The task.</param>
         /// <param name="computer">The computer.</param>
         /// <param name="file">The file.</param>
-        private void CopyFile(string relativePath, MigrationTask task, string computer, string file)
+        private void CopyFile(string relativePath, MigrationTask task, string computer, string file, bool isFolderCopy = false)
         {
             string fileName = Path.GetFileName(file);
             if (!task.OverwriteDestinationFile)
@@ -429,8 +484,16 @@ namespace MigrationFileCopy
             }
 
             File.Delete("\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file));
-            File.Copy(task.Source, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file), true);
-            AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = string.Format("Copied {0} to {1}", task.Source, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file)) });
+            if (isFolderCopy)
+            {
+                File.Copy(file, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file), true);
+                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = string.Format("Copied {0} to {1}", file, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file)) });
+            }
+            else
+            {
+                File.Copy(task.Source, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file), true);
+                AllLogEntries.Add(new LogEntry() { DateTime = DateTime.Now.ToString(), Message = string.Format("Copied {0} to {1}", task.Source, "\\\\" + computer + "\\" + relativePath + "\\" + Path.GetFileName(file)) });
+            }
         }
         /// <summary>
         /// Gets the relative path.
@@ -454,7 +517,7 @@ namespace MigrationFileCopy
             {
                 AllTasks.Remove(activeTask);
                 CheckRunStatus();
-                ProjectTitle = "Migration Copy Tool *";
+                ProjectTitle = "Orchestrator Tool *";
             }
         }
         /// <summary>
@@ -482,7 +545,7 @@ namespace MigrationFileCopy
             }
 
             File.WriteAllText(projectSavePath, xmlResult);
-            ProjectTitle = "Migration Copy Tool";
+            ProjectTitle = "Orchestrator Tool";
         }
         /// <summary>
         /// Changes the content.
@@ -492,14 +555,7 @@ namespace MigrationFileCopy
         {
             if (isRunning)
                 return;
-            destinationSelectedPath = null;
-            fileName = null;
-            findWhat = null;
-            isFolderCopy = false;
-            overwriteDestinationFile = false;
-            replaceWith = null;
-            sourceSelectedPath = null;
-            taskTitle = null;
+            ResetData();
             switch (obj.ToString())
             {
                 default:
@@ -511,6 +567,10 @@ namespace MigrationFileCopy
                 case "Find & Replace":
                     UserControl = new FindAndReplace();
                     MigrationTaskType = TaskType.FindReplace;
+                    break;
+                case "Delete":
+                    UserControl = new DeleteFileFolder();
+                    MigrationTaskType = TaskType.DeleteFileOrFolder;
                     break;
                 case "Remote Computers":
                     UserControl = new ComputerList();
@@ -524,41 +584,103 @@ namespace MigrationFileCopy
                     MessageBox.Show("\u00A9 Mayank Kumar. \r\n All Rights Reserved.");
                     break;
                 case "Cancel":
-                    userControl = null;
+                    UserControl = null;
+                    break;
+                case "RestartService":
+                    UserControl = new RestartService();
+                    MigrationTaskType = TaskType.RestartJobService;
+                    break;
+                case "StartProcess":
+                    UserControl = new StartProcess();
+                    MigrationTaskType = TaskType.StartProcess;
                     break;
             }
         }
+
+        /// <summary>
+        /// Resets the data.
+        /// </summary>
+        private void ResetData()
+        {
+            destinationSelectedPath = null;
+            fileName = null;
+            findWhat = null;
+            isFolderCopy = false;
+            overwriteDestinationFile = false;
+            replaceWith = null;
+            sourceSelectedPath = null;
+            taskTitle = null;
+            migrationTaskType = TaskType.None;
+        }
+
         /// <summary>
         /// Creates the task.
         /// </summary>
         /// <param name="obj">The object.</param>
         private void CreateTask(object obj)
         {
-            MigrationTask task = new MigrationTask();
             switch (MigrationTaskType)
             {
                 case TaskType.CopyFile:
+                    if (!string.IsNullOrEmpty(this["SourceSelectedPath"]))
+                        return;
+                    if (!string.IsNullOrEmpty(this["DestinationSelectedPath"]))
+                        return;
+                    CreateTask();
+                    break;
                 case TaskType.FindReplace:
-                case TaskType.ChangeKeyValue:
-                    task.Destination = destinationSelectedPath;
-                    task.FileName = fileName;
-                    task.FindWhat = findWhat;
-                    task.IsFolderCopy = isFolderCopy;
-                    task.OverwriteDestinationFile = overwriteDestinationFile;
-                    task.ReplaceWith = replaceWith;
-                    task.Source = sourceSelectedPath;
-                    task.TaskTitle = taskTitle;
-                    task.TaskType = migrationTaskType;
-                    allTasks.Add(task);
-                    ProjectTitle = "Migration Copy Tool *";
-                    CheckRunStatus();
+                    if (!string.IsNullOrEmpty(this["FileName"]))
+                        return;
+                    if (!string.IsNullOrEmpty(this["FindWhat"]))
+                        return;
+                    if (!string.IsNullOrEmpty(this["ReplaceWith"]))
+                        return;
+                    CreateTask();
+                    break;
+                case TaskType.DeleteFileOrFolder:
+                    if (!string.IsNullOrEmpty(this["FileName"]))
+                        return;
+                    CreateTask();
+                    break;
+                case TaskType.RestartJobService:
+                    if (!string.IsNullOrEmpty(this["FileName"]))
+                        return;
+                    CreateTask();
+                    break;
+                case TaskType.StartProcess:
+                    if (!string.IsNullOrEmpty(this["FileName"]))
+                        return;
+                    CreateTask();
                     break;
                 case TaskType.RemoteComputer:
                     File.WriteAllLines("ComputerList.txt", computerList.Split(new string[] { "\r\n" }, StringSplitOptions.RemoveEmptyEntries));
                     break;
             }
 
+            ResetData();
+            UserControl = null;
+        }
 
+        /// <summary>
+        /// Creates the task.
+        /// </summary>
+        private void CreateTask()
+        {
+            if (!string.IsNullOrEmpty(this["TaskTitle"]))
+                return;
+            MigrationTask task = new MigrationTask();
+            task.Destination = destinationSelectedPath;
+            task.FileName = fileName;
+            task.FindWhat = findWhat;
+            task.IsFolderCopy = isFolderCopy;
+            task.OverwriteDestinationFile = overwriteDestinationFile;
+            task.ReplaceWith = replaceWith;
+            task.Source = sourceSelectedPath;
+            task.TaskTitle = taskTitle;
+            task.TaskType = migrationTaskType;
+            allTasks.Add(task);
+            ProjectTitle = "Orchestrator Tool *";
+            CheckRunStatus();
         }
         /// <summary>
         /// Browses the file.
@@ -589,7 +711,7 @@ namespace MigrationFileCopy
                         AllTasks.Add(task);
                     }
                     CheckRunStatus();
-                    ProjectTitle = "Migration Copy Tool";
+                    ProjectTitle = "Orchestrator Tool";
                     projectSavePath = filePath;
                 }
             }
@@ -605,19 +727,6 @@ namespace MigrationFileCopy
                 CanTasksRun = false;
         }
         /// <summary>
-        /// Schedulers the task added.
-        /// </summary>
-        /// <param name="param">The parameter.</param>
-        private void SchedulerTaskAdded(object param)
-        {
-            MigrationTask task = new MigrationTask();
-            task.TaskTitle = "Restart Scheduler Service";
-            task.TaskType = TaskType.RestartJobService;
-            allTasks.Add(task);
-            ProjectTitle = "Migration Copy Tool *";
-            CheckRunStatus();
-        }
-        /// <summary>
         /// Notifies the property changed.
         /// </summary>
         /// <param name="propName">Name of the property.</param>
@@ -627,6 +736,22 @@ namespace MigrationFileCopy
             {
                 PropertyChanged(this, new PropertyChangedEventArgs(propName));
             }
+        }
+
+        /// <summary>
+        /// Validates the specified propery name.
+        /// </summary>
+        /// <param name="properyName">Name of the propery.</param>
+        /// <returns></returns>
+        private string Validate(string properyName)
+        {
+            var propValue = this.GetType().GetProperty(properyName).GetValue(this);
+            if (propValue == null || string.IsNullOrEmpty(propValue.ToString().Trim()))
+            {
+                return "This field cannot be empty";
+            }
+
+            return string.Empty;
         }
         #endregion
     }

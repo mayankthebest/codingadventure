@@ -62,6 +62,9 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="DeleteFileFolder.xaml.cs">
+      <DependentUpon>DeleteFileFolder.xaml</DependentUpon>
+    </Compile>
     <Compile Include="LogEntry.cs" />
     <Compile Include="LogViewerControl.xaml.cs">
       <DependentUpon>LogViewerControl.xaml</DependentUpon>
@@ -70,11 +73,21 @@
     <Compile Include="Helper.cs" />
     <Compile Include="MigrationTaskViewModel.cs" />
     <Compile Include="RelayCommand.cs" />
+    <Compile Include="RestartService.xaml.cs">
+      <DependentUpon>RestartService.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="StartProcess.xaml.cs">
+      <DependentUpon>StartProcess.xaml</DependentUpon>
+    </Compile>
     <Page Include="ComputerList.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="CopyFileControl.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="DeleteFileFolder.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -107,6 +120,14 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="RestartService.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="StartProcess.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs">

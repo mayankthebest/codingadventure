@@ -84,6 +84,10 @@
         /// </summary>
         CopyFile,
         /// <summary>
+        /// The delete file or folder
+        /// </summary>
+        DeleteFileOrFolder,
+        /// <summary>
         /// The find replace
         /// </summary>
         FindReplace,
@@ -98,6 +102,10 @@
         /// <summary>
         /// The remote computer
         /// </summary>
-        RemoteComputer
+        RemoteComputer,
+        /// <summary>
+        /// The start process
+        /// </summary>
+        StartProcess
     }
 }

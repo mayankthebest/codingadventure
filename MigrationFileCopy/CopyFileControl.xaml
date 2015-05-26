@@ -17,13 +17,13 @@
             <RowDefinition Height="100*"/>
         </Grid.RowDefinitions>
         <Label Content="Task Name" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="0"/>
-        <TextBox Text="{Binding TaskTitle}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0"/>
-        
+        <TextBox Text="{Binding TaskTitle, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0"/>
+
         <Label Content="Source" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="1"/>
-        <TextBox Text="{Binding SourceSelectedPath}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1"/>
+        <TextBox Text="{Binding SourceSelectedPath, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" HorizontalAlignment="Stretch" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="1"/>
 
         <Label Content="Target" HorizontalAlignment="Center" Margin="0" VerticalAlignment="Center" Grid.Column="0" Grid.Row="2"/>
-        <TextBox HorizontalAlignment="Stretch" Text="{Binding DestinationSelectedPath}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="2"/>
+        <TextBox HorizontalAlignment="Stretch" Text="{Binding DestinationSelectedPath, ValidatesOnDataErrors=True, UpdateSourceTrigger=PropertyChanged}" Style="{StaticResource textBoxInError}" Height="24" Margin="0" TextWrapping="Wrap" VerticalAlignment="Center" Grid.Column="1" Grid.Row="2"/>
         <CheckBox Content="Overwrite Destination File" IsChecked="{Binding OverwriteDestinationFile}" Grid.Column="1" HorizontalAlignment="Left" Margin="0" Grid.Row="3" VerticalAlignment="Center" Grid.ColumnSpan="2"/>
         <CheckBox Content="Copy Entire Source Folder" IsChecked="{Binding IsFolderCopy}" Grid.Column="1" HorizontalAlignment="Left" Margin="0,50,0,0" Grid.Row="3" VerticalAlignment="Center" Grid.ColumnSpan="2"/>
     </Grid>
