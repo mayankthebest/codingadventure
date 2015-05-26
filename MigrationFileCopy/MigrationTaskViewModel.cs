@@ -581,7 +581,7 @@ namespace MigrationFileCopy
                     MigrationTaskType = TaskType.RemoteComputer;
                     break;
                 case "About":
-                    MessageBox.Show("\u00A9 Mayank Kumar. \r\n All Rights Reserved.");
+                    MessageBox.Show("Source Code at:\r\nhttps://github.com/mayankthebest/migrationtool");
                     break;
                 case "Cancel":
                     UserControl = null;
