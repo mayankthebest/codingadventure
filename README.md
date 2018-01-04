@@ -3,4 +3,4 @@ This tool helps you perform common tasks like Copy files/folders, Delete files/f
 
 This tool also helps you chain together tasks and also save a sequence of tasks for reuse.
 
-Do provide your feedback/suggestions or report bugs!
+Do provide your feedback/suggestions or report bugs!!
